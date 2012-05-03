@@ -27,17 +27,28 @@ class Song:
 """
     Grabs the url for song, assigns song.url to the url if song.url hasn't
     already been assigned, and returns the url.
+    Or, returns None if the song can't be played (404). This usually occurs
+    if the song has been removed by hypem.
 """
-def grab_song_url(song, jar):
+def grab_song_url(song):
+    global cookie_jar
+
     if song.url != None:
         return song.url
-    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(jar))
+    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie_jar))
     json_url = 'http://hypem.com/serve/source/' + song.id + '/' + song.key
-    json_url_req = urllib2.Request(json_url)
-    jar.add_cookie_header(json_url_req)
-    json_text = str(BeautifulSoup(opener.open(json_url_req)))
-    song.url = json.loads(json_text)['url']
-    return song.url
+
+    try:
+        json_url_req = urllib2.Request(json_url)
+        cookie_jar.add_cookie_header(json_url_req)
+        json_text = str(BeautifulSoup(opener.open(json_url_req)))
+        song.url = json.loads(json_text)['url']
+        return song.url
+    except urllib2.HTTPError, e:
+        if e.code == 404:
+            return None
+        else:
+            print "HTTP error %d encountered" % e.code
 
 """
     For the given query string, gets the proper search results
@@ -75,28 +86,39 @@ def populate_song_results(qresponse_soup):
 
     for div in div_results:
         artist_link = div.find('a', { 'class' : 'artist' })
-        js = div.find('script').contents[0]
+        if artist_link != None:
+            js = div.find('script').contents[0]
 
-        song = Song(div['id'][14:], artist_link.contents[0].strip(),
-            artist_link.find_next_sibling('a').contents[0].strip(),
-            re.search(r"key: '(\w+)'", js).group(1))
+            song = Song(div['id'][14:], artist_link.contents[0].strip(),
+                artist_link.find_next_sibling('a').contents[0].strip(),
+                re.search(r"key: '(\w+)'", js).group(1))
 
-        song_results.append(song)
+            song_results.append(song)
 
 def queryloop():
-    global query_results
+    global song_results
+
+    first_query = True
 
     while True:
         query = raw_input('\n> ')
         if query == 'q':
             quit()
+        elif not first_query and re.match(r"[01]?[0-9]", query) and int(query) < len(song_results):
+            song_url = grab_song_url(song_results[int(query)])
+            if song_url == None:
+                print 'Song was removed :( Try another.'
+            else:
+                print song_url
+        else:
+            # Obtain and parse the results list
+            qresponse_soup = grab_query_results_soup(query)
+            populate_song_results(qresponse_soup)
 
-        # Obtain and parse the results list
-        qresponse_soup = grab_query_results_soup(query)
-        populate_song_results(qresponse_soup)
-        print
-        for index, r in enumerate(song_results):
-            print '[' + str(index) + '] ' + str(r)
+            print
+            for index, r in enumerate(song_results):
+                print '[' + str(index) + '] ' + str(r)
+            first_query = False
 
 print ('\nWelcome to hpye')
 
