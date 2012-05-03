@@ -10,6 +10,9 @@ from bs4 import BeautifulSoup
 query_results = {}
 
 def queryloop():
+    global query_results
+
+    result_count = 0
     while True:
         query = raw_input('\n> ')
         if query == 'q':
@@ -30,11 +33,16 @@ def queryloop():
         print len(div_results)
 
         for div in div_results:
-            print '[' + div['id'][14:] + ']',
+            print result_count, '[' + div['id'][14:] + ']',
+            result_count += 1
             artist_link = div.find('a', { 'class' : 'artist' })
             print artist_link.contents[0].strip() + " -",
             print artist_link.find_next_sibling('a').contents[0].strip()
+            js = div.find('script').contents[0]
+            print re.search(r"key: '(\w+)'", js).group(1)
+            #print re.match(r"key: '(\w+)'", js).group(1)
 
+        result_count = 0
         query_results.clear()
 
 print ('\nWelcome to hpye')
