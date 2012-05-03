@@ -1,5 +1,5 @@
 """
-  hpye -- a python client for The Hype Machine
+  hpye -- a python client
 """
 
 import cookielib, json, re, sys
@@ -95,6 +95,16 @@ def populate_song_results(qresponse_soup):
 
             song_results.append(song)
 
+"""
+    Downloads the song in the given path.
+"""
+def download_file(song, path='.'):
+    f = urllib2.urlopen(grab_song_url(song))
+    local_file = open(path + '/' + str(song) + '.mp3', 'w')
+    local_file.write(f.read())
+    local_file.close()
+    print "Done."
+
 def queryloop():
     global song_results
 
@@ -105,11 +115,12 @@ def queryloop():
         if query == 'q':
             quit()
         elif not first_query and re.match(r"[01]?[0-9]", query) and int(query) < len(song_results):
-            song_url = grab_song_url(song_results[int(query)])
+            song = song_results[int(query)]
+            song_url = grab_song_url(song)
             if song_url == None:
                 print 'Song was removed :( Try another.'
             else:
-                print song_url
+                download_file(song)
         else:
             # Obtain and parse the results list
             qresponse_soup = grab_query_results_soup(query)
@@ -120,6 +131,6 @@ def queryloop():
                 print '[' + str(index) + '] ' + str(r)
             first_query = False
 
-print ('\nWelcome to hpye')
+print ('\nWelcome to hpye.')
 
 queryloop()
