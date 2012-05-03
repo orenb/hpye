@@ -60,6 +60,8 @@ def grab_query_results_soup(query):
 def populate_song_results(qresponse_soup):
     global song_results
 
+    del song_results[:]
+
     result_count = 0
 
     div_results = qresponse_soup.find_all(id=re.compile("section-track-[a-zA-Z0-9]+"))
@@ -73,10 +75,10 @@ def populate_song_results(qresponse_soup):
             artist_link.find_next_sibling('a').contents[0].strip(),
             re.search(r"key: '(\w+)'", js).group(1))
 
+        song_results.append(song)
+
         if result_count == 1:
             grab_song(song, cookie_jar)
-
-        print song
 
         result_count += 1
 
@@ -93,11 +95,9 @@ def queryloop():
         # Obtain and parse the results list
         qresponse_soup = grab_query_results_soup(query)
         populate_song_results(qresponse_soup)
-
+        for r in song_results:
+            print r
 
 print ('\nWelcome to hpye')
-
-#s = Song("1kwh6", "a", "b", "d045b43e0413fb690345234d74514f7a")
-#grab_song(s, cookie_jar)
 
 queryloop()
