@@ -2,7 +2,7 @@
   hpye -- a python client for The Hype Machine
 """
 
-import cookielib, re, sys
+import cookielib, json, re, sys
 import urllib2
 from bs4 import BeautifulSoup
 
@@ -16,19 +16,28 @@ class Song:
         self.artist = str(artist.encode('utf-8'))
         self.title = str(title.encode('utf-8'))
         self.key = str(key.encode('utf-8'))
+        self.url = None
 
     def __str__(self):
-        return "[%s] %s - %s (KEY: %s)" % (self.id, self.artist,
-            self.title, self.key)
+        return "%s - %s" % (self.artist, self.title)
 
-def grab_song(song, jar):
+    def add_url(self, url):
+        self.url = url
+
+"""
+    Grabs the url for song, assigns song.url to the url if song.url hasn't
+    already been assigned, and returns the url.
+"""
+def grab_song_url(song, jar):
+    if song.url != None:
+        return song.url
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(jar))
     json_url = 'http://hypem.com/serve/source/' + song.id + '/' + song.key
-    print json_url
     json_url_req = urllib2.Request(json_url)
     jar.add_cookie_header(json_url_req)
-    print json_url_req.header_items()
-    print BeautifulSoup(opener.open(json_url_req))
+    json_text = str(BeautifulSoup(opener.open(json_url_req)))
+    song.url = json.loads(json_text)['url']
+    return song.url
 
 """
     For the given query string, gets the proper search results
@@ -62,10 +71,7 @@ def populate_song_results(qresponse_soup):
 
     del song_results[:]
 
-    result_count = 0
-
     div_results = qresponse_soup.find_all(id=re.compile("section-track-[a-zA-Z0-9]+"))
-    print len(div_results)
 
     for div in div_results:
         artist_link = div.find('a', { 'class' : 'artist' })
@@ -76,13 +82,6 @@ def populate_song_results(qresponse_soup):
             re.search(r"key: '(\w+)'", js).group(1))
 
         song_results.append(song)
-
-        if result_count == 1:
-            grab_song(song, cookie_jar)
-
-        result_count += 1
-
-    result_count = 0
 
 def queryloop():
     global query_results
@@ -95,8 +94,9 @@ def queryloop():
         # Obtain and parse the results list
         qresponse_soup = grab_query_results_soup(query)
         populate_song_results(qresponse_soup)
-        for r in song_results:
-            print r
+        print
+        for index, r in enumerate(song_results):
+            print '[' + str(index) + '] ' + str(r)
 
 print ('\nWelcome to hpye')
 
