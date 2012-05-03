@@ -9,9 +9,6 @@ from bs4 import BeautifulSoup
 # globals
 query_results = {}
 
-# HypeParser
-
-f = open('html.html', 'w')
 def queryloop():
     while True:
         query = raw_input('> ')
@@ -23,9 +20,6 @@ def queryloop():
         print len(results)
 
         print [div['id'] for div in results]
-        #print results
-        #print qresponse_soup.find(id='recently-posted')
-        f.write( str(qresponse_soup) )
         query_results.clear()
+
 queryloop()
-f.close()
