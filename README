@@ -1,2 +1,8 @@
 A command-line interface for hypem.
 For educational purposes only -- don't actually use this.
+
+Python 2.7
+Dependencies:
+* BeautifulSoup 4
+* Pyglet
+* AVbin
