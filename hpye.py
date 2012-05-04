@@ -9,6 +9,9 @@ from bs4 import BeautifulSoup
 
 # constants
 TMP_PATH = '/tmp/hpye'
+Q_NORMAL = 0
+Q_LATEST = 1
+Q_POPULAR = 2
 
 # globals
 cookie_jar = cookielib.CookieJar()
@@ -60,14 +63,20 @@ def grab_song_url(song):
     For the given query string, gets the proper search results
     from hypem and returns these results as a BeautifulSoup object.
 """
-def grab_query_results_soup(query):
+def grab_query_results_soup(query, special_q=Q_NORMAL):
     global cookie_jar
 
     # Obtain and parse the results list
     while True:
         try:
-            req = urllib2.Request("http://hypem.com/search/"+ query +
-                '/1/?ax=1')
+            if special_q == Q_LATEST:
+                url = "http://hypem.com/latest/"
+            elif special_q == Q_POPULAR:
+                url = "http://hypem.com/popular/"
+            else:
+                url = "http://hypem.com/search/" + query
+            url += "/1/?ax=1"
+            req = urllib2.Request(url)
             qresponse = urllib2.urlopen(req)
             cookie_jar.clear_session_cookies()
             cookie_jar.extract_cookies(qresponse, req)
@@ -148,6 +157,16 @@ def queryloop():
     first_query = True
 
     while True:
+        if first_query:
+            qresponse_soup = grab_query_results_soup(None, Q_LATEST)
+            populate_song_results(qresponse_soup)
+
+            print '\n-- Results for %s:' % 'latest'
+            for index, r in enumerate(song_results):
+                print '[' + str(index) + '] ' + str(r)
+            print '\n[q] Quit hpye'
+            first_query = False
+            continue
         query = raw_input('\n> ')
         if query == 'q':
             quit_hpye()
@@ -165,7 +184,7 @@ def queryloop():
             qresponse_soup = grab_query_results_soup(query)
             populate_song_results(qresponse_soup)
 
-            print
+            print '\n-- Results for %s:' % query
             for index, r in enumerate(song_results):
                 print '[' + str(index) + '] ' + str(r)
             print '\n[q] Quit hpye'
