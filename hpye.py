@@ -2,13 +2,19 @@
   hpye -- a python client
 """
 
-import cookielib, json, re, sys
+import cookielib, json, os, re, shutil, sys
+import pyglet
 import urllib2
 from bs4 import BeautifulSoup
 
+# constants
+TMP_PATH = '/tmp/hpye'
+
 # globals
 cookie_jar = cookielib.CookieJar()
+player = pyglet.media.Player()
 song_results = []
+downloaded_file_paths = set([])
 
 class Song:
     def __init__(self, id, artist, title, key):
@@ -96,14 +102,45 @@ def populate_song_results(qresponse_soup):
             song_results.append(song)
 
 """
-    Downloads the song in the given path.
+    Downloads the song in the temp folder.
+    Returns the complete path to the downloaded file.
 """
-def download_file(song, path='.'):
+def download_file(song, path=TMP_PATH):
+    # Make the /tmp/hpye folder if doesn't exist already.
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    print 'Loading . . . '
     f = urllib2.urlopen(grab_song_url(song))
-    local_file = open(path + '/' + str(song) + '.mp3', 'w')
+    path = path + '/' + str(song) + '.mp3'
+    local_file = open(path, 'w')
     local_file.write(f.read())
     local_file.close()
-    print "Done."
+    print "PLAYING. Press Ctrl+C to pause or switch tracks."
+    downloaded_file_paths.add(path)
+    return path
+
+"""
+    Plays this song.
+"""
+def play_song(song):
+    try:
+        sound = pyglet.media.load(download_file(song))
+        player.queue(sound)
+        if player.playing:
+            player.next()
+        player.play()
+        pyglet.app.run()
+    except KeyboardInterrupt:
+        pass
+
+"""
+    Delete temp files and quit.
+"""
+def quit_hpye():
+    if os.path.exists(TMP_PATH):
+        shutil.rmtree(TMP_PATH, True)
+    quit()
 
 def queryloop():
     global song_results
@@ -113,15 +150,17 @@ def queryloop():
     while True:
         query = raw_input('\n> ')
         if query == 'q':
-            quit()
+            quit_hpye()
         elif not first_query and re.match(r"[01]?[0-9]", query) and int(query) < len(song_results):
+            first_query = False
             song = song_results[int(query)]
             song_url = grab_song_url(song)
             if song_url == None:
                 print 'Song was removed :( Try another.'
             else:
-                download_file(song)
+                play_song(song)
         else:
+            first_query = False
             # Obtain and parse the results list
             qresponse_soup = grab_query_results_soup(query)
             populate_song_results(qresponse_soup)
@@ -129,7 +168,7 @@ def queryloop():
             print
             for index, r in enumerate(song_results):
                 print '[' + str(index) + '] ' + str(r)
-            first_query = False
+            print '\n[q] Quit hpye'
 
 print ('\nWelcome to hpye.')
 
