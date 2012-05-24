@@ -13,7 +13,6 @@ PACKET_MAX_LENGTH = 16384
 client_socket = 42
 cookie_jar = cookielib.CookieJar()
 player = pyglet.media.Player()
-song_results = []
 downloaded_file_paths = set([])
 
 HOST = 'localhost'
@@ -89,24 +88,19 @@ def grab_query_results_soup(query, special_q=Q_NORMAL):
     return qresponse_soup
 
 """
-    Returns as a STRINGIFIED json the song results list according to API
-    in response to the most recent query (as determined by the contents
-    of global song_results).
+    Returns as a STRINGIFIED json the given song results list according to API,
+    generally in response to the most recent query.
 """
-def stringified_query_results():
-    global song_results
+def stringified_query_results(song_results):
     return str([[s.id, s.artist, s.title] for s in song_results])
 
 """
-    For the given query response soup, clears song_results and
-    populates it with the results, as Song objects, of the query.
+    For the given query response soup, returns a list of Songs
+    that are the results of the query.
 """
-def populate_song_results(qresponse_soup):
-    global song_results
-
-    del song_results[:]
-
+def populated_song_results(qresponse_soup):
     div_results = qresponse_soup.find_all(id=re.compile("section-track-[a-zA-Z0-9]+"))
+    song_results = []
 
     for div in div_results:
         artist_link = div.find('a', { 'class' : 'artist' })
@@ -118,6 +112,8 @@ def populate_song_results(qresponse_soup):
                 re.search(r"key: '(\w+)'", js).group(1))
 
             song_results.append(song)
+
+    return song_results
 
 """
     Downloads the song in the temp folder.
@@ -173,17 +169,15 @@ def handle_search(msg):
 
     # Obtain and parse the results list
     qresponse_soup = grab_query_results_soup(query)
-    populate_song_results(qresponse_soup)
+    song_results = populated_song_results(qresponse_soup)
 
-    return stringified_query_results()
+    return stringified_query_results(song_results)
 
 """
     Perpetually read messages from the client (until client quits)
     and forward to proper handlers upon each message.
 """
 def msgloop(client_socket):
-    global song_results
-
     msg_handlers = {'search' : handle_search}
 
     while True:
