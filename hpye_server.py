@@ -7,8 +7,10 @@ TMP_PATH = '/tmp/hpye'
 Q_NORMAL = 0
 Q_LATEST = 1
 Q_POPULAR = 2
+PACKET_MAX_LENGTH = 16384
 
 # globals
+client_socket = 42
 cookie_jar = cookielib.CookieJar()
 player = pyglet.media.Player()
 song_results = []
@@ -87,6 +89,15 @@ def grab_query_results_soup(query, special_q=Q_NORMAL):
     return qresponse_soup
 
 """
+    Returns as a STRINGIFIED json the song results list according to API
+    in response to the most recent query (as determined by the contents
+    of global song_results).
+"""
+def stringified_query_results():
+    global song_results
+    return str([[s.id, s.artist, s.title] for s in song_results])
+
+"""
     For the given query response soup, clears song_results and
     populates it with the results, as Song objects, of the query.
 """
@@ -150,29 +161,50 @@ def quit_hpye():
     quit()
 
 """
+    Handle searches.
+    msg is an incoming message as a string.
+    Returns the reply message as a string.
+"""
+def handle_search(msg):
+    m = re.match(r"search (\w+)", msg)
+    if m is None:
+        return "ERROR"
+    query = m.group(1)
+
+    # Obtain and parse the results list
+    qresponse_soup = grab_query_results_soup(query)
+    populate_song_results(qresponse_soup)
+
+    return stringified_query_results()
+
+"""
     Perpetually read messages from the client (until client quits)
     and forward to proper handlers upon each message.
 """
 def msgloop(client_socket):
     global song_results
 
+    msg_handlers = {'search' : handle_search}
+
     while True:
-        msg = client_socket.recv(1024)
+        msg = client_socket.recv(PACKET_MAX_LENGTH)
         if not msg: break
 
-        m = re.search(r'search (\w*)', msg)
-        if m:
-            # Obtain and parse the results list
-            qresponse_soup = grab_query_results_soup(query)
-            populate_song_results(qresponse_soup)
+        print 'msg received:', msg
+        the_split = msg.split()
+        print the_split
+        if len(the_split) < 1:
+            continue    # Not a valid message; just wait for the next
 
-            print '\n-- Results for %s:' % query
-            for index, r in enumerate(song_results):
-                print '[' + str(index) + '] ' + str(r)
-            print '\n[q] Quit hpye'
+        return_msg = msg_handlers[the_split[0]](msg)
+        client_socket.sendall(return_msg)
+
 
 def main():
+    global client_socket
+
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((HOST, PORT))
     server_socket.listen(1) # At most one connection
 

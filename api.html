@@ -10,14 +10,30 @@
 <h3>Search Queries</h3>
 <ul>
     <li><b><tt>search <i>query</i></b></tt></li>
-    <li>Returns a json list of songid, artist, song pairs.
+    <li>Returns a (stringified) json list of songid, artist, song pairs.
         <ul>
-            <li>Example: <tt>[['1m9n2', 'Kesha', 'Blow (some remix)'],
-                ['3enz3', 'Ke$ha', 'Take It Off (In da club rmx)']]</tt></li>
+            <li>Example: <tt>"[['1m9n2', 'Kesha', 'Blow (some remix)'],
+                ['3enz3', 'Ke$ha', 'Take It Off (In da club rmx)']]"</tt></li>
         </ul>
     </li>
 </ul>
 
+<h3>Play Song From Query Result</h3>
+<ul>
+    <li><b><tt>play <i>songid</i></tt></b></li>
+    <li>Plays the song with song ID <tt>songid</tt>, forgoing the play
+        queue.</li>
+    <li>Returns "<tt>OK</tt>" if successfully parsed query and retrieving song;
+        "ERROR" if there was an error.</li>
+</ul>
+
+<h3>Pause / Resume Playback</h3>
+<ul>
+    <li><b><tt>pauseresume</tt></b></li>
+    <li>Returns <tt>OK</tt>.</li>
+</ul>
+
+<!--
 <h3>Play Song From Query Result</h3>
 <ul>
     <li><b><tt>play #<i>num</i></b></tt> (num between 0 and 19)</li>
@@ -26,6 +42,7 @@
     <li>Returns "<tt>OK</tt>" if successfully parsed query and retrieving song;
         "ERROR" if there was an error.</li>
 </ul>
+-->
 
 </body>
 </html>
