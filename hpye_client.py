@@ -1,4 +1,4 @@
-import json, socket
+import json, re, socket
 
 # globals
 ss = None
@@ -18,14 +18,15 @@ def queryloop():
 
         if query == 'q':
             quit_hpye()
-#       elif not first_query and re.match(r"[01]?[0-9]", query) and int(query) < len(song_results):
-#           first_query = False
-#           song = song_results[int(query)]
-#           song_url = grab_song_url(song)
-#           if song_url == None:
-#               print 'Song was removed :( Try another.'
-#           else:
-#               play_song(song)
+        elif not first_query and re.match(r"[01]?[0-9]", query) and int(query) < len(song_results):
+            first_query = False
+            ss.sendall('play ' + song_results[int(query)][0])
+            reply = ss.recv(PACKET_MAX_LENGTH)
+            if reply == 'ERROR_REMOVED':
+                print 'Song was removed :( Try another.'
+                continue
+            elif reply == 'OK':
+                print 'Now playing.'
         else:
             first_query = False
             ss.sendall('search ' + query)
