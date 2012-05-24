@@ -1,7 +1,8 @@
-import socket
+import json, socket
 
 # globals
 ss = None
+song_results = []
 
 # constants
 HOST = 'localhost'
@@ -9,6 +10,7 @@ PORT = 4793
 PACKET_MAX_LENGTH = 16384
 
 def queryloop():
+    global song_results
     first_query = True
 
     while True:
@@ -27,14 +29,14 @@ def queryloop():
         else:
             first_query = False
             ss.sendall('search ' + query)
+            reply = ss.recv(PACKET_MAX_LENGTH)
+            del song_results
+            song_results = json.loads(reply)
 
-#           print '\n-- Results for %s:' % query
-#           for index, r in enumerate(song_results):
-#               print '[' + str(index) + '] ' + str(r)
-#           print '\n[q] Quit hpye'
-
-        reply = ss.recv(PACKET_MAX_LENGTH)
-        print reply
+            print '\n-- Results for %s:' % query
+            for index, r in enumerate(song_results):
+                print '[' + str(index) + '] %s - %s' % (r[1], r[2])
+            print '\n[q] Quit hpye'
 
 def quit_hpye():
     quit()

@@ -92,7 +92,8 @@ def grab_query_results_soup(query, special_q=Q_NORMAL):
     generally in response to the most recent query.
 """
 def stringified_query_results(song_results):
-    return str([[s.id, s.artist, s.title] for s in song_results])
+    r = json.dumps([[s.id, s.artist, s.title] for s in song_results])
+    return r
 
 """
     For the given query response soup, returns a list of Songs
