@@ -86,9 +86,15 @@ def new_song_obj(songid):
     if artist_link != None:
         js = div.find('script').contents[0]
 
+        title_spans = artist_link.find_next_sibling('a').find_all('span')
+        song_title = title_spans[0].contents[0].strip()
+        if len(title_spans) > 1:
+            song_title += ' (' + title_spans[1].contents[0].strip() + ')'
+
         song = Song(div['id'][14:], artist_link.contents[0].strip(),
-            artist_link.find_next_sibling('a').contents[0].strip(),
+            song_title,
             re.search(r"key: '(\w+)'", js).group(1))
+
     return song
 
 """
@@ -141,8 +147,13 @@ def populated_song_results(qresponse_soup):
         if artist_link != None:
             js = div.find('script').contents[0]
 
+            title_spans = artist_link.find_next_sibling('a').find_all('span')
+            song_title = title_spans[0].contents[0].strip()
+            if len(title_spans) > 1:
+                song_title += ' (' + title_spans[1].contents[0].strip() + ')'
+
             song = Song(div['id'][14:], artist_link.contents[0].strip(),
-                artist_link.find_next_sibling('a').contents[0].strip(),
+                song_title,
                 re.search(r"key: '(\w+)'", js).group(1))
 
             song_results.append(song)
