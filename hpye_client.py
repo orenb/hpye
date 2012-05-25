@@ -27,6 +27,10 @@ def queryloop():
                 continue
             elif reply == 'OK':
                 print 'Now playing.'
+        elif not first_query and query == 'p':
+            first_query = False
+            ss.sendall('pauseresume')
+            reply = ss.recv(PACKET_MAX_LENGTH)
         else:
             first_query = False
             ss.sendall('search ' + query)

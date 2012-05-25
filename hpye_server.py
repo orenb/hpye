@@ -150,7 +150,9 @@ def populated_song_results(qresponse_soup):
             title_spans = artist_link.find_next_sibling('a').find_all('span')
             song_title = title_spans[0].contents[0].strip()
             if len(title_spans) > 1:
-                song_title += ' (' + title_spans[1].contents[0].strip() + ')'
+                subtitle = title_spans[1].contents[0].strip()
+                if not re.search(r'remixes$', subtitle):
+                    song_title += ' (' + subtitle + ')'
 
             song = Song(div['id'][14:], artist_link.contents[0].strip(),
                 song_title,
@@ -191,6 +193,8 @@ def download_file(song, path=TMP_PATH):
     error or "ERROR_REMOVED" if download_file(song) returned None.
 """
 def play_song(song):
+    global player
+
     try:
         if song is None:
             return "ERROR"
@@ -250,11 +254,18 @@ def handle_play(msg):
     return play_song(song_obj)
 
 """
+    Handle pause/resume.
+"""
+def handle_pauseresume(msg):
+    player.pause()
+
+"""
     Perpetually read messages from the client (until client quits)
     and forward to proper handlers upon each message.
 """
 def msgloop(client_socket):
-    msg_handlers = {'search' : handle_search, 'play' : handle_play}
+    msg_handlers = {'search' : handle_search, 'play' : handle_play,
+        'pauseresume' : handle_pauseresume}
 
     while True:
         msg = client_socket.recv(PACKET_MAX_LENGTH)
