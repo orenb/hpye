@@ -64,7 +64,10 @@ def queryloop():
         query = textbox.gather().strip()
 
         if query == 'q':
-            quit_client()
+            ss.sendall('quit')
+            reply = ss.recv(PACKET_MAX_LENGTH)
+            if reply == 'OK':
+                quit_client()
         elif query == '':
             continue
         elif not first_query and re.match(r"[01]?[0-9]", query) and \
@@ -124,10 +127,6 @@ def main(stdscr):
     curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_BLACK)
     now_playing_window = curses.newwin(3, scr_width, 0, 0)
     update_now_playing()
-#   now_playing_win.hline(0, 0, '=', scr_width)
-#   now_playing_win.addstr(1, 0, 'hpye CLI ❤ ', curses.color_pair(1))
-#   now_playing_win.addstr(1, 11, ' NOW PLAYING:', curses.color_pair(2))
-#   now_playing_win.hline(2, 0, '=', scr_width)
 
     # Input window + textbox
     input_prompt_window = curses.newwin(1, scr_width, scr_height - 1, 0)

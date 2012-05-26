@@ -268,12 +268,22 @@ def handle_pauseresume(msg):
         return "OK_RESUMED"
 
 """
+    Handle a client quit.
+"""
+def handle_quit(msg):
+    global is_paused
+
+    is_paused = True
+    pygame.mixer.music.stop()
+    return "OK"
+
+"""
     Perpetually read messages from the client (until client quits)
     and forward to proper handlers upon each message.
 """
 def msgloop(client_socket):
     msg_handlers = {'search' : handle_search, 'play' : handle_play,
-        'pauseresume' : handle_pauseresume}
+        'pauseresume' : handle_pauseresume, 'quit' : handle_quit}
 
     while True:
         msg = client_socket.recv(PACKET_MAX_LENGTH).strip()
