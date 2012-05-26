@@ -1,16 +1,15 @@
 # coding: utf-8
 
 import json, re, socket
-
 import locale
-import time
 import curses, curses.wrapper, curses.textpad
+from song import Song
 
 # globals
 ss = None
 song_results = []
 scr_height, scr_width = 0, 0
-current_song_artist, current_song_title = '', ''
+current_song = None
 # curses windows + textbox
 input_prompt_window = None
 input_window = None
@@ -35,7 +34,7 @@ def clear_prompt():
     textbox = curses.textpad.Textbox(input_window)
 
 def update_now_playing(paused=False):
-    global current_song_artist, current_song_title
+    global current_song
     global now_playing_window
 
     now_playing_window.clear()
@@ -43,17 +42,16 @@ def update_now_playing(paused=False):
     now_playing_window.addstr(1, 0, 'hpye CLI ❤ ', curses.color_pair(1))
     now_playing_window.addstr(1, 11, ' NOW PLAYING:', curses.color_pair(2))
 
-    song_string = (current_song_artist + ' - ' +
-        current_song_title).encode('utf-8')
-    now_playing_window.addstr(1, 25, song_string)
-    if paused:
-        now_playing_window.addstr(1, 27 + len(song_string), '(paused)')
+    if current_song is not None:
+        now_playing_window.addstr(1, 25, str(current_song))
+        if paused:
+            now_playing_window.addstr(1, 27 + len(str(current_song)), '(paused)')
 
     now_playing_window.hline(2, 0, '=', scr_width)
     now_playing_window.refresh()
 
 def queryloop():
-    global song_results, current_song_artist, current_song_title
+    global song_results, current_song
     global results_window, status_line_window, textbox
     first_query = True
 
@@ -81,8 +79,9 @@ def queryloop():
                     'Song was removed :( Try another.')
             elif reply == 'OK':
                 status_line_window.addstr(0, 0, 'Now playing.')
-                current_song_artist = song_results[int(query)][1]
-                current_song_title = song_results[int(query)][2]
+                current_song = Song(song_results[int(query)][0],
+                    song_results[int(query)][1],
+                    song_results[int(query)][2])
                 update_now_playing()
             status_line_window.refresh()
         elif not first_query and query == 'p':

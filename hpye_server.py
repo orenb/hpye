@@ -1,6 +1,7 @@
 import cookielib, json, os, re, shutil, socket, sys, urllib2
 import pygame.mixer
 from bs4 import BeautifulSoup
+from song import Song
 
 # constants
 TMP_PATH = '/tmp/hpye'
@@ -18,20 +19,6 @@ is_paused = True
 
 HOST = 'localhost'
 PORT = 4793
-
-class Song:
-    def __init__(self, id, artist, title, key):
-        self.id = str(id.encode('utf-8'))
-        self.artist = str(artist.encode('utf-8'))
-        self.title = str(title.encode('utf-8'))
-        self.key = str(key.encode('utf-8'))
-        self.url = None
-
-    def __str__(self):
-        return "%s - %s" % (self.artist, self.title)
-
-    def add_url(self, url):
-        self.url = url
 
 """
     Grabs the url for song, assigns song.url to the url if song.url hasn't
@@ -286,17 +273,20 @@ def msgloop(client_socket):
         'pauseresume' : handle_pauseresume, 'quit' : handle_quit}
 
     while True:
-        msg = client_socket.recv(PACKET_MAX_LENGTH).strip()
-        if not msg: break
+        try:
+            msg = client_socket.recv(PACKET_MAX_LENGTH).strip()
+            if not msg: break
 
-        print 'msg received:', '[' + msg + ']'
-        the_split = msg.split()
+            print 'msg received:', '[' + msg + ']'
+            the_split = msg.split()
 #       print the_split
-        if len(the_split) < 1:
-            continue    # Not a valid message; just wait for the next
+            if len(the_split) < 1:
+                continue    # Not a valid message; just wait for the next
 
-        return_msg = msg_handlers[the_split[0]](msg)
-        client_socket.sendall(return_msg)
+            return_msg = msg_handlers[the_split[0]](msg)
+            client_socket.sendall(return_msg)
+        except KeyboardInterrupt:
+            quit_hpye()
 
 def main():
     global client_socket
