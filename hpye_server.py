@@ -1,5 +1,5 @@
 import cookielib, json, os, re, shutil, socket, sys, urllib2
-import pyglet
+import pygame.mixer
 from bs4 import BeautifulSoup
 
 # constants
@@ -12,8 +12,9 @@ PACKET_MAX_LENGTH = 16384
 # globals
 client_socket = 42
 cookie_jar = cookielib.CookieJar()
-player = pyglet.media.Player()
 downloaded_file_paths = set([])
+# playback
+is_paused = True
 
 HOST = 'localhost'
 PORT = 4793
@@ -193,8 +194,6 @@ def download_file(song, path=TMP_PATH):
     error or "ERROR_REMOVED" if download_file(song) returned None.
 """
 def play_song(song):
-    global player
-
     try:
         if song is None:
             return "ERROR"
@@ -203,12 +202,9 @@ def play_song(song):
         if file_path is None:
             return "ERROR_REMOVED"
 
-        sound = pyglet.media.load(file_path)
-        player.queue(sound)
-        if player.playing:
-            player.next()
-        player.play()
-        pyglet.app.run()
+        pygame.mixer.music.load(file_path)
+        pygame.mixer.music.play()
+        return "OK"
     except KeyboardInterrupt:
         return "OK"
         pass
@@ -244,6 +240,8 @@ def handle_search(msg):
     given in this msg.
 """
 def handle_play(msg):
+    global is_paused
+
     m = re.match(r"play (\w+)", msg)
     if m is None:
         return "ERROR"
@@ -251,13 +249,22 @@ def handle_play(msg):
     song_obj = new_song_obj(songid)
     if song_obj is None:
         return "ERROR_REMOVED"
+    is_paused = False
     return play_song(song_obj)
 
 """
     Handle pause/resume.
 """
 def handle_pauseresume(msg):
-    player.pause()
+    global is_paused
+
+    if not is_paused:
+        pygame.mixer.music.pause()
+        is_paused = True
+    else:
+        pygame.mixer.music.unpause()
+        is_paused = False
+    return "OK"
 
 """
     Perpetually read messages from the client (until client quits)
@@ -271,7 +278,7 @@ def msgloop(client_socket):
         msg = client_socket.recv(PACKET_MAX_LENGTH)
         if not msg: break
 
-#       print 'msg received:', msg
+        print 'msg received:', '[' + msg + ']'
         the_split = msg.split()
 #       print the_split
         if len(the_split) < 1:
@@ -282,6 +289,8 @@ def msgloop(client_socket):
 
 def main():
     global client_socket
+
+    pygame.mixer.init(frequency=44100)
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

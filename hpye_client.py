@@ -18,6 +18,8 @@ def queryloop():
 
         if query == 'q':
             quit_hpye()
+        elif query == '':
+            continue
         elif not first_query and re.match(r"[01]?[0-9]", query) and int(query) < len(song_results):
             first_query = False
             ss.sendall('play ' + song_results[int(query)][0])
