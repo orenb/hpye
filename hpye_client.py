@@ -10,6 +10,7 @@ import curses, curses.wrapper, curses.textpad
 ss = None
 song_results = []
 scr_height, scr_width = 0, 0
+current_song_artist, current_song_title = '', ''
 # curses windows + textbox
 input_prompt_window = None
 input_window = None
@@ -33,7 +34,8 @@ def clear_prompt():
     input_window.clear()
     textbox = curses.textpad.Textbox(input_window)
 
-def update_now_playing(artist=None, title=None, paused=False):
+def update_now_playing(paused=False):
+    global current_song_artist, current_song_title
     global now_playing_window
 
     now_playing_window.clear()
@@ -41,17 +43,17 @@ def update_now_playing(artist=None, title=None, paused=False):
     now_playing_window.addstr(1, 0, 'hpye CLI ❤ ', curses.color_pair(1))
     now_playing_window.addstr(1, 11, ' NOW PLAYING:', curses.color_pair(2))
 
-    if title is not None:
-        song_string = (artist + ' - ' + title).encode('utf-8')
-        now_playing_window.addstr(1, 25, song_string)
-        if paused:
-            now_playing_window.addstr(1, 27 + len(song_string), '(paused)')
+    song_string = (current_song_artist + ' - ' +
+        current_song_title).encode('utf-8')
+    now_playing_window.addstr(1, 25, song_string)
+    if paused:
+        now_playing_window.addstr(1, 27 + len(song_string), '(paused)')
 
     now_playing_window.hline(2, 0, '=', scr_width)
     now_playing_window.refresh()
 
 def queryloop():
-    global song_results
+    global song_results, current_song_artist, current_song_title
     global results_window, status_line_window, textbox
     first_query = True
 
@@ -65,22 +67,29 @@ def queryloop():
             quit_client()
         elif query == '':
             continue
-        elif not first_query and re.match(r"[01]?[0-9]", query) and int(query) < len(song_results):
+        elif not first_query and re.match(r"[01]?[0-9]", query) and \
+                int(query) < len(song_results):
             first_query = False
             ss.sendall('play ' + song_results[int(query)][0])
             reply = ss.recv(PACKET_MAX_LENGTH)
             status_line_window.clear()
             if reply == 'ERROR_REMOVED':
-                status_line_window.addstr(0, 0, 'Song was removed :( Try another.')
+                status_line_window.addstr(0, 0,
+                    'Song was removed :( Try another.')
             elif reply == 'OK':
                 status_line_window.addstr(0, 0, 'Now playing.')
-                update_now_playing(song_results[int(query)][1],
-                    song_results[int(query)][2])
+                current_song_artist = song_results[int(query)][1]
+                current_song_title = song_results[int(query)][2]
+                update_now_playing()
             status_line_window.refresh()
         elif not first_query and query == 'p':
             first_query = False
             ss.sendall('pauseresume')
             reply = ss.recv(PACKET_MAX_LENGTH)
+            if reply == 'OK_PAUSED':
+                update_now_playing(paused=True)
+            elif reply == 'OK_RESUMED':
+                update_now_playing(paused=False)
         else:
             first_query = False
             ss.sendall('search ' + query)

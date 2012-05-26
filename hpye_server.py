@@ -261,10 +261,11 @@ def handle_pauseresume(msg):
     if not is_paused:
         pygame.mixer.music.pause()
         is_paused = True
+        return "OK_PAUSED"
     else:
         pygame.mixer.music.unpause()
         is_paused = False
-    return "OK"
+        return "OK_RESUMED"
 
 """
     Perpetually read messages from the client (until client quits)
