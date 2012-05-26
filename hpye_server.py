@@ -275,7 +275,7 @@ def msgloop(client_socket):
         'pauseresume' : handle_pauseresume}
 
     while True:
-        msg = client_socket.recv(PACKET_MAX_LENGTH)
+        msg = client_socket.recv(PACKET_MAX_LENGTH).strip()
         if not msg: break
 
         print 'msg received:', '[' + msg + ']'
