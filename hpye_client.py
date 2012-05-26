@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import json, re, socket
 
 import locale
@@ -7,11 +9,13 @@ import curses, curses.wrapper, curses.textpad
 # globals
 ss = None
 song_results = []
+scr_height, scr_width = 0, 0
 # curses windows + textbox
 input_prompt_window = None
 input_window = None
 results_window = None
 status_line_window = None
+now_playing_window = None
 textbox = None
 
 # constants
@@ -28,6 +32,23 @@ PACKET_MAX_LENGTH = 16384
 def clear_prompt():
     input_window.clear()
     textbox = curses.textpad.Textbox(input_window)
+
+def update_now_playing(artist=None, title=None, paused=False):
+    global now_playing_window
+
+    now_playing_window.clear()
+    now_playing_window.hline(0, 0, '=', scr_width)
+    now_playing_window.addstr(1, 0, 'hpye CLI ❤ ', curses.color_pair(1))
+    now_playing_window.addstr(1, 11, ' NOW PLAYING:', curses.color_pair(2))
+
+    if title is not None:
+        song_string = (artist + ' - ' + title).encode('utf-8')
+        now_playing_window.addstr(1, 25, song_string)
+        if paused:
+            now_playing_window.addstr(1, 27 + len(song_string), '(paused)')
+
+    now_playing_window.hline(2, 0, '=', scr_width)
+    now_playing_window.refresh()
 
 def queryloop():
     global song_results
@@ -53,6 +74,8 @@ def queryloop():
                 status_line_window.addstr(0, 0, 'Song was removed :( Try another.')
             elif reply == 'OK':
                 status_line_window.addstr(0, 0, 'Now playing.')
+                update_now_playing(song_results[int(query)][1],
+                    song_results[int(query)][2])
             status_line_window.refresh()
         elif not first_query and query == 'p':
             first_query = False
@@ -82,16 +105,20 @@ def quit_client():
 
 def main(stdscr):
     global ss
-    global input_prompt_window, input_window, results_window, textbox
-    global status_line_window
-    print ('\nWelcome to hpye CLI.')
+    global scr_height, scr_width
+    global input_prompt_window, input_window, results_window, now_playing_window
+    global textbox, status_line_window
 
-    # Now-playing bar
     scr_height, scr_width = stdscr.getmaxyx()
-    now_playing_win = curses.newwin(3, scr_width, 0, 0)
-    now_playing_win.hline(0, 0, '=', scr_width)
-    now_playing_win.addstr(1, 0, 'NOW PLAYING:', curses.A_STANDOUT)
-    now_playing_win.hline(2, 0, '=', scr_width)
+    # Now-playing bar
+    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    now_playing_window = curses.newwin(3, scr_width, 0, 0)
+    update_now_playing()
+#   now_playing_win.hline(0, 0, '=', scr_width)
+#   now_playing_win.addstr(1, 0, 'hpye CLI ❤ ', curses.color_pair(1))
+#   now_playing_win.addstr(1, 11, ' NOW PLAYING:', curses.color_pair(2))
+#   now_playing_win.hline(2, 0, '=', scr_width)
 
     # Input window + textbox
     input_prompt_window = curses.newwin(1, scr_width, scr_height - 1, 0)
@@ -103,7 +130,6 @@ def main(stdscr):
     results_window = curses.newwin(40, scr_width, 8, 0)
     status_line_window = curses.newwin(2, scr_width, 54, 0)
 
-    now_playing_win.refresh()
     input_prompt_window.refresh()
     input_window.refresh()
     curses.use_default_colors()
