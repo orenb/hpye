@@ -68,24 +68,8 @@ def new_song_obj(songid):
                 print "500 encountered; retrying"
                 continue
 
-    song = None
     div = qresponse_soup.find(id=re.compile("section-track-[a-zA-Z0-9]+"))
-    artist_link = div.find('a', { 'class' : 'artist' })
-    if artist_link != None:
-        js = div.find('script').contents[0]
-
-        title_spans = artist_link.find_next_sibling('a').find_all('span')
-        song_title = str(title_spans[0].contents[0]).strip()
-        if len(title_spans) > 1:
-            subtitle = str(title_spans[1].find('span', {'class' : 'remix-link'}).contents[0]).strip()
-            if not re.search(r'remixes$', subtitle):
-                song_title += ' (' + subtitle + ')'
-
-        song = Song(div['id'][14:], str(artist_link.contents[0]).strip(),
-            song_title,
-            re.search(r"key: '(\w+)'", js).group(1))
-
-    return song
+    return grab_song_from_soup_div(div)
 
 """
     For the given query string, gets the proper search results
@@ -121,8 +105,33 @@ def grab_query_results_soup(query, special_q=Q_NORMAL):
     generally in response to the most recent query.
 """
 def stringified_query_results(song_results):
+    print song_results
     r = json.dumps([[s.id, s.artist, s.title] for s in song_results])
     return r
+
+"""
+    Given a BeautifulSoup object representing a "section-track" div, returns
+    a new Song object corresponding to the song inside that div.
+"""
+def grab_song_from_soup_div(div):
+    artist_link = div.find('a', { 'class' : 'artist' })
+    title_link = div.find('a', { 'class' : 'track' })
+
+    js = div.find('script').contents[0]
+
+    title_spans = title_link.find_all('span')
+    song_title = unicode(title_spans[0].contents[0]).strip()
+    if len(title_spans) > 1:
+        subtitle = str(title_spans[1].find('span', {'class' : 'remix-link'}).contents[0]).strip()
+        if not re.search(r'remixes$', subtitle):
+            song_title += ' (' + subtitle + ')'
+
+    song = Song(div['id'][14:],
+        '(No artist)' if artist_link is None else str(artist_link.contents[0]).strip(),
+        song_title,
+        re.search(r"key: '(\w+)'", js).group(1))
+
+    return song
 
 """
     For the given query response soup, returns a list of Songs
@@ -133,22 +142,7 @@ def populated_song_results(qresponse_soup):
     song_results = []
 
     for div in div_results:
-        artist_link = div.find('a', { 'class' : 'artist' })
-        if artist_link != None:
-            js = div.find('script').contents[0]
-
-            title_spans = artist_link.find_next_sibling('a').find_all('span')
-            song_title = unicode(title_spans[0].contents[0]).strip()
-            if len(title_spans) > 1:
-                subtitle = str(title_spans[1].find('span', {'class' : 'remix-link'}).contents[0]).strip()
-                if not re.search(r'remixes$', subtitle):
-                    song_title += ' (' + subtitle + ')'
-
-            song = Song(div['id'][14:], str(artist_link.contents[0]).strip(),
-                song_title,
-                re.search(r"key: '(\w+)'", js).group(1))
-
-            song_results.append(song)
+        song_results.append(grab_song_from_soup_div(div))
 
     return song_results
 
@@ -281,7 +275,6 @@ def msgloop(client_socket):
 
             print 'msg received:', '[' + msg + ']'
             the_split = msg.split()
-#       print the_split
             if len(the_split) < 1:
                 continue    # Not a valid message; just wait for the next
 
