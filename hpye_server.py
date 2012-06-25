@@ -75,11 +75,13 @@ def new_song_obj(songid):
         js = div.find('script').contents[0]
 
         title_spans = artist_link.find_next_sibling('a').find_all('span')
-        song_title = title_spans[0].contents[0].strip()
+        song_title = str(title_spans[0].contents[0]).strip()
         if len(title_spans) > 1:
-            song_title += ' (' + title_spans[1].contents[0].strip() + ')'
+            subtitle = str(title_spans[1].find('span', {'class' : 'remix-link'}).contents[0]).strip()
+            if not re.search(r'remixes$', subtitle):
+                song_title += ' (' + subtitle + ')'
 
-        song = Song(div['id'][14:], artist_link.contents[0].strip(),
+        song = Song(div['id'][14:], str(artist_link.contents[0]).strip(),
             song_title,
             re.search(r"key: '(\w+)'", js).group(1))
 
@@ -136,13 +138,13 @@ def populated_song_results(qresponse_soup):
             js = div.find('script').contents[0]
 
             title_spans = artist_link.find_next_sibling('a').find_all('span')
-            song_title = title_spans[0].contents[0].strip()
+            song_title = unicode(title_spans[0].contents[0]).strip()
             if len(title_spans) > 1:
-                subtitle = title_spans[1].contents[0].strip()
+                subtitle = str(title_spans[1].find('span', {'class' : 'remix-link'}).contents[0]).strip()
                 if not re.search(r'remixes$', subtitle):
                     song_title += ' (' + subtitle + ')'
 
-            song = Song(div['id'][14:], artist_link.contents[0].strip(),
+            song = Song(div['id'][14:], str(artist_link.contents[0]).strip(),
                 song_title,
                 re.search(r"key: '(\w+)'", js).group(1))
 
