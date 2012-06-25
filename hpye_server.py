@@ -11,7 +11,6 @@ Q_POPULAR = 2
 PACKET_MAX_LENGTH = 16384
 
 # globals
-client_socket = 42
 cookie_jar = cookielib.CookieJar()
 downloaded_file_paths = set([])
 # playback
@@ -105,7 +104,6 @@ def grab_query_results_soup(query, special_q=Q_NORMAL):
     generally in response to the most recent query.
 """
 def stringified_query_results(song_results):
-    print song_results
     r = json.dumps([[s.id, s.artist, s.title] for s in song_results])
     return r
 
@@ -284,8 +282,6 @@ def msgloop(client_socket):
             quit_hpye()
 
 def main():
-    global client_socket
-
     pygame.mixer.init(frequency=44100)
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
