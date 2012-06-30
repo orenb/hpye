@@ -125,12 +125,14 @@ def grab_song_from_soup_div(div):
     title_spans = title_link.find_all('span')
     song_title = unicode(title_spans[0].contents[0]).strip()
     if len(title_spans) > 1:
-        subtitle = unicode(title_spans[1].find('span', {'class' : 'remix-link'}).contents[0]).strip()
+        subtitle = unicode(title_spans[1].find('span',
+            {'class' : 'remix-link'}).contents[0]).strip()
         if not re.search(r'remixes$', subtitle):
             song_title += ' (' + subtitle + ')'
 
     song = Song(div['id'][14:],
-        '(No artist)' if artist_link is None else unicode(artist_link.contents[0]).strip(),
+        '(No artist)' if artist_link is None else
+            unicode(artist_link.contents[0]).strip(),
         song_title,
         re.search(r"key: '(\w+)'", js).group(1))
 
@@ -141,7 +143,8 @@ def grab_song_from_soup_div(div):
     that are the results of the query.
 """
 def populated_song_results(qresponse_soup):
-    div_results = qresponse_soup.find_all(id=re.compile("section-track-[a-zA-Z0-9]+"))
+    div_results = qresponse_soup.find_all(
+        id=re.compile("section-track-[a-zA-Z0-9]+"))
     song_results = []
 
     for div in div_results:

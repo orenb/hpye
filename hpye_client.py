@@ -73,7 +73,7 @@ def update_now_playing(paused=False):
     if current_song is not None:
         now_playing_window.addstr(1, 25, str(current_song))
         if paused:
-            now_playing_window.addstr(1, 27 + len(str(current_song)), '(paused)')
+            now_playing_window.addstr(1, 27 + len(str(current_song)),'(paused)')
 
     now_playing_window.hline(2, 0, '=', scr_width)
     now_playing_window.refresh()
@@ -119,7 +119,8 @@ def queryloop(stdscr):
                     status_line_window.clear()
                     results_window.clear()
                     results_window.addstr(0, 0, 'RESULTS for ')
-                    results_window.addstr(0, len('RESULTS for '), query, curses.color_pair(2))
+                    results_window.addstr(0, len('RESULTS for '), query,
+                        curses.color_pair(2))
                     qstrlen = len('RESULTS for ') + len(query) + 2
                     results_window.hline(0, qstrlen, 0, WINDOW_WIDTH - qstrlen)
                     for index, r in enumerate(song_results):
@@ -127,7 +128,8 @@ def queryloop(stdscr):
                             index_displayed = str(index)
                         else:
                             index_displayed = chr(ord('a') + (index - 10))
-                        results_window.addnstr(index + 1, 4, '[' + index_displayed + '] ' +
+                        results_window.addnstr(index + 1, 4,
+                            '[' + index_displayed + '] ' +
                             r[1].encode('utf-8') + ' - ' + r[2].encode('utf-8'),
                             WINDOW_WIDTH - 4)
                     status_line_window.refresh()
@@ -177,8 +179,8 @@ def quit_client():
 def main(stdscr):
     global ss
     global scr_height, scr_width
-    global search_prompt_window, search_window, results_window, now_playing_window
-    global usage_window, searchbox, status_line_window
+    global search_prompt_window, search_window, results_window
+    global now_playing_window, usage_window, searchbox, status_line_window
 
     scr_height, scr_width = stdscr.getmaxyx()
 
