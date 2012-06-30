@@ -88,22 +88,6 @@ def queryloop(stdscr):
 
                 if query == '':
                     continue
-                elif not first_query and re.match(r"[01]?[0-9]", query) and \
-                        int(query) < len(song_results):
-                    first_query = False
-                    ss.sendall('play ' + song_results[int(query)][0])
-                    reply = ss.recv(PACKET_MAX_LENGTH)
-                    status_line_window.clear()
-                    if reply == 'ERROR_REMOVED':
-                        status_line_window.addstr(0, 0,
-                            'Song was removed :( Try another.')
-                    elif reply == 'OK':
-                        status_line_window.addstr(0, 0, 'Now playing.')
-                        current_song = Song(song_results[int(query)][0],
-                            song_results[int(query)][1],
-                            song_results[int(query)][2])
-                        update_now_playing()
-                    status_line_window.refresh()
                 else:
                     first_query = False
                     ss.sendall('search ' + query)
@@ -134,6 +118,29 @@ def queryloop(stdscr):
                     update_now_playing(paused=True)
                 elif reply == 'OK_RESUMED':
                     update_now_playing(paused=False)
+
+            elif c in range(ord('0'), ord('9') + 1) or \
+                c in range(ord('a'), ord('j') + 1):
+
+                if c in range(ord('0'), ord('9') + 1):
+                    song_index = int(chr(c))
+                else:
+                    song_index = 10 + (c - ord('a'))
+
+                first_query = False
+                ss.sendall('play ' + song_results[song_index][0])
+                reply = ss.recv(PACKET_MAX_LENGTH)
+                status_line_window.clear()
+                if reply == 'ERROR_REMOVED':
+                    status_line_window.addstr(0, 0,
+                        'Song was removed :( Try another.')
+                elif reply == 'OK':
+                    status_line_window.addstr(0, 0, 'Now playing.')
+                    current_song = Song(song_results[song_index][0],
+                        song_results[song_index][1],
+                        song_results[song_index][2])
+                    update_now_playing()
+                status_line_window.refresh()
 
 def quit_client():
     curses.endwin()
