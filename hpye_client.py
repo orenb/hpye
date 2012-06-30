@@ -13,6 +13,7 @@ current_song = None
 # curses windows + searchbox
 search_prompt_window = None
 search_window = None
+usage_window = None
 results_window = None
 status_line_window = None
 now_playing_window = None
@@ -22,6 +23,7 @@ searchbox = None
 HOST = 'localhost'
 PORT = 4793
 PACKET_MAX_LENGTH = 16384
+WINDOW_WIDTH = 120
 
 """
     Clears the search_prompt_window and search_window, and if
@@ -97,16 +99,17 @@ def queryloop(stdscr):
 
                     status_line_window.clear()
                     results_window.clear()
-                    results_window.addstr(0, 0, '-- Results for ' + query)
+                    results_window.addstr(0, 0, 'RESULTS for ' + query)
+                    qstrlen = len('RESULTS for ') + len(query) + 2
+                    results_window.hline(0, qstrlen, 0, WINDOW_WIDTH - qstrlen)
                     for index, r in enumerate(song_results):
                         if index < 10:
                             index_displayed = str(index)
                         else:
                             index_displayed = chr(ord('a') + (index - 10))
-                        results_window.addnstr(index + 1, 0, '[' + index_displayed + '] ' +
+                        results_window.addnstr(index + 1, 4, '[' + index_displayed + '] ' +
                             r[1].encode('utf-8') + ' - ' + r[2].encode('utf-8'),
-                            128)
-                    results_window.addstr(len(song_results) + 2, 0, '[q] Quit hpye')
+                            WINDOW_WIDTH - 4)
                     status_line_window.refresh()
                     results_window.refresh()
 
@@ -150,9 +153,10 @@ def main(stdscr):
     global ss
     global scr_height, scr_width
     global search_prompt_window, search_window, results_window, now_playing_window
-    global searchbox, status_line_window
+    global usage_window, searchbox, status_line_window
 
     scr_height, scr_width = stdscr.getmaxyx()
+
     # Now-playing bar
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_BLACK)
@@ -166,9 +170,18 @@ def main(stdscr):
     search_window = curses.newwin(1, scr_width, scr_height - 1, 2)
     searchbox = curses.textpad.Textbox(search_window)
 
+    # Usage window
+    usage_window = curses.newwin(40, WINDOW_WIDTH, 4, 4)
+    usage_window.addstr(0, 0, 'USAGE')
+    usage_window.hline(0, 7, 0, WINDOW_WIDTH - 6)
+    usage_window.addstr(1, 0, '     /       SEARCH for a song')
+    usage_window.addstr(2, 0, '     p       PLAY/PAUSE currently playing song')
+    usage_window.addstr(3, 0, '     q       QUIT hpye CLI')
+    usage_window.refresh()
+
     # Results and error windows
-    results_window = curses.newwin(40, scr_width, 8, 0)
-    status_line_window = curses.newwin(2, scr_width, 54, 0)
+    results_window = curses.newwin(40, WINDOW_WIDTH, 12, 4)
+    status_line_window = curses.newwin(2, WINDOW_WIDTH, 38, 4)
 
     curses.use_default_colors()
     search_prompt_window.refresh()
