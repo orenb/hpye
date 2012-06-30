@@ -110,10 +110,15 @@ def stringified_query_results(song_results):
 """
     Given a BeautifulSoup object representing a "section-track" div, returns
     a new Song object corresponding to the song inside that div.
+    If no Song could be retrieved from this div (i.e., because the song was
+    removed from hypem but still had an entry on the site), return None.
 """
 def grab_song_from_soup_div(div):
     artist_link = div.find('a', { 'class' : 'artist' })
     title_link = div.find('a', { 'class' : 'track' })
+
+    if title_link is None:
+        return None
 
     js = div.find('script').contents[0]
 
@@ -140,7 +145,9 @@ def populated_song_results(qresponse_soup):
     song_results = []
 
     for div in div_results:
-        song_results.append(grab_song_from_soup_div(div))
+        song = grab_song_from_soup_div(div)
+        if song is not None:
+            song_results.append(song)
 
     return song_results
 
