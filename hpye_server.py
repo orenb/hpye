@@ -162,7 +162,7 @@ def download_file(song, path=TMP_PATH):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    print '\nLOADING:', song
+    print 'LOADING:', song
     song_url = grab_song_url(song)
     if song_url is None:
         return None
