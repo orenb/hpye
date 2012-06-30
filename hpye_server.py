@@ -130,7 +130,7 @@ def grab_song_from_soup_div(div):
             song_title += ' (' + subtitle + ')'
 
     song = Song(div['id'][14:],
-        '(No artist)' if artist_link is None else str(artist_link.contents[0]).strip(),
+        '(No artist)' if artist_link is None else unicode(artist_link.contents[0]).strip(),
         song_title,
         re.search(r"key: '(\w+)'", js).group(1))
 

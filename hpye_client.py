@@ -39,14 +39,27 @@ def toggle_search_prompt(enabled=False):
     search_window.clear()
 
     if enabled is True:
-        search_prompt_window = curses.newwin(2, scr_width, scr_height - 2, 0)
+        search_prompt_window = curses.newwin(2, scr_width, scr_height - 2, 4)
         search_prompt_window.addstr(0, 0, 'SEARCH QUERY:')
         search_prompt_window.addstr(1, 0, '>')
-        search_window = curses.newwin(1, scr_width, scr_height - 1, 2)
+        search_window = curses.newwin(1, scr_width, scr_height - 1, 6)
         searchbox = curses.textpad.Textbox(search_window)
         search_window.refresh()
 
     search_prompt_window.refresh()
+
+"""
+    Highlights the row corresponding to the song that was selected
+    (i.e., row "song_index" in the results_window).
+    Or, if highlight is False, then remove the highlight.
+"""
+def highlight_selected_song_row(song_index, highlight=True):
+    global results_window
+    if highlight:
+        results_window.addstr(song_index + 1, 0, '>')
+    else:
+        results_window.addstr(song_index + 1, 0, ' ')
+    results_window.refresh()
 
 def update_now_playing(paused=False):
     global current_song
@@ -65,10 +78,16 @@ def update_now_playing(paused=False):
     now_playing_window.hline(2, 0, '=', scr_width)
     now_playing_window.refresh()
 
+def update_status_line(text):
+    status_line_window.clear()
+    status_line_window.addstr(0, 0, text)
+    status_line_window.refresh()
+
 def queryloop(stdscr):
     global song_results, current_song
     global results_window, status_line_window, searchbox
     first_query = True
+    song_index = 0
 
     while True:
         toggle_search_prompt(False)
@@ -125,25 +144,30 @@ def queryloop(stdscr):
             elif c in range(ord('0'), ord('9') + 1) or \
                 c in range(ord('a'), ord('j') + 1):
 
+                highlight_selected_song_row(song_index, False)
+
                 if c in range(ord('0'), ord('9') + 1):
                     song_index = int(chr(c))
                 else:
                     song_index = 10 + (c - ord('a'))
 
                 first_query = False
+                highlight_selected_song_row(song_index)
+                update_status_line('Loading your selection.')
+
                 ss.sendall('play ' + song_results[song_index][0])
                 reply = ss.recv(PACKET_MAX_LENGTH)
+
                 status_line_window.clear()
                 if reply == 'ERROR_REMOVED':
-                    status_line_window.addstr(0, 0,
-                        'Song was removed :( Try another.')
+                    update_status_line('Song was removed :( Try another.')
+                    highlight_selected_song_row(song_index, False)
                 elif reply == 'OK':
-                    status_line_window.addstr(0, 0, 'Now playing.')
                     current_song = Song(song_results[song_index][0],
                         song_results[song_index][1],
                         song_results[song_index][2])
                     update_now_playing()
-                status_line_window.refresh()
+                    update_status_line('Now playing.')
 
 def quit_client():
     curses.endwin()
@@ -163,13 +187,6 @@ def main(stdscr):
     now_playing_window = curses.newwin(3, scr_width, 0, 0)
     update_now_playing()
 
-    # Input window + searchbox
-    search_prompt_window = curses.newwin(2, scr_width, scr_height - 2, 0)
-    search_prompt_window.addstr(0, 0, 'SEARCH QUERY:')
-    search_prompt_window.addstr(1, 0, '>')
-    search_window = curses.newwin(1, scr_width, scr_height - 1, 2)
-    searchbox = curses.textpad.Textbox(search_window)
-
     # Usage window
     usage_window = curses.newwin(40, WINDOW_WIDTH, 4, 4)
     usage_window.addstr(0, 0, 'USAGE')
@@ -183,9 +200,12 @@ def main(stdscr):
     results_window = curses.newwin(40, WINDOW_WIDTH, 12, 4)
     status_line_window = curses.newwin(2, WINDOW_WIDTH, 38, 4)
 
+    # Searchbox
+    search_prompt_window = curses.newwin(2, scr_width, scr_height - 2, 4)
+    search_window = curses.newwin(1, scr_width, scr_height - 1, 4)
+    toggle_search_prompt()
+
     curses.use_default_colors()
-    search_prompt_window.refresh()
-    search_window.refresh()
 
     ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ss.connect((HOST, PORT))
