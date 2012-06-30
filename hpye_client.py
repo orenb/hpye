@@ -104,14 +104,6 @@ def queryloop(stdscr):
                             song_results[int(query)][2])
                         update_now_playing()
                     status_line_window.refresh()
-                elif not first_query and query == 'p':
-                    first_query = False
-                    ss.sendall('pauseresume')
-                    reply = ss.recv(PACKET_MAX_LENGTH)
-                    if reply == 'OK_PAUSED':
-                        update_now_playing(paused=True)
-                    elif reply == 'OK_RESUMED':
-                        update_now_playing(paused=False)
                 else:
                     first_query = False
                     ss.sendall('search ' + query)
@@ -123,12 +115,25 @@ def queryloop(stdscr):
                     results_window.clear()
                     results_window.addstr(0, 0, '-- Results for ' + query)
                     for index, r in enumerate(song_results):
-                        results_window.addnstr(index + 1, 0, '[' + str(index) + '] ' +
+                        if index < 10:
+                            index_displayed = str(index)
+                        else:
+                            index_displayed = chr(ord('a') + (index - 10))
+                        results_window.addnstr(index + 1, 0, '[' + index_displayed + '] ' +
                             r[1].encode('utf-8') + ' - ' + r[2].encode('utf-8'),
                             128)
                     results_window.addstr(len(song_results) + 2, 0, '[q] Quit hpye')
                     status_line_window.refresh()
                     results_window.refresh()
+
+            elif chr(c) == 'p' and not first_query:
+                first_query = False
+                ss.sendall('pauseresume')
+                reply = ss.recv(PACKET_MAX_LENGTH)
+                if reply == 'OK_PAUSED':
+                    update_now_playing(paused=True)
+                elif reply == 'OK_RESUMED':
+                    update_now_playing(paused=False)
 
 def quit_client():
     curses.endwin()
