@@ -153,7 +153,7 @@ def queryloop(stdscr):
 
                 first_query = False
                 highlight_selected_song_row(song_index)
-                update_status_line('Loading your selection.')
+                update_status_line('Loading your selection...')
 
                 ss.sendall('play ' + song_results[song_index][0])
                 reply = ss.recv(PACKET_MAX_LENGTH)

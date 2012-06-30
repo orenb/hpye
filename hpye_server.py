@@ -125,7 +125,7 @@ def grab_song_from_soup_div(div):
     title_spans = title_link.find_all('span')
     song_title = unicode(title_spans[0].contents[0]).strip()
     if len(title_spans) > 1:
-        subtitle = str(title_spans[1].find('span', {'class' : 'remix-link'}).contents[0]).strip()
+        subtitle = unicode(title_spans[1].find('span', {'class' : 'remix-link'}).contents[0]).strip()
         if not re.search(r'remixes$', subtitle):
             song_title += ' (' + subtitle + ')'
 
