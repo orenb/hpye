@@ -211,7 +211,7 @@ def quit_hpye():
     Returns the reply message as a string.
 """
 def handle_search(msg):
-    m = re.match(r"search (\w+)", msg)
+    m = re.match(r"search (.+)", msg)
     if m is None:
         return "ERROR"
     query = m.group(1)
