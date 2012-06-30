@@ -118,7 +118,8 @@ def queryloop(stdscr):
 
                     status_line_window.clear()
                     results_window.clear()
-                    results_window.addstr(0, 0, 'RESULTS for ' + query)
+                    results_window.addstr(0, 0, 'RESULTS for ')
+                    results_window.addstr(0, len('RESULTS for '), query, curses.color_pair(2))
                     qstrlen = len('RESULTS for ') + len(query) + 2
                     results_window.hline(0, qstrlen, 0, WINDOW_WIDTH - qstrlen)
                     for index, r in enumerate(song_results):
